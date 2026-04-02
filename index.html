@@ -1,1 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Hunt</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>WORD HUNT</h1>
+            <div class="stats">
+                <span id="global-rank">GLOBAL RANK: --</span>
+                <span id="score">SCORE: 0</span>
+            </div>
+        </header>
 
+        <main>
+            <div class="visual-display">
+                <div class="lens">
+                    <p class="instruction">Find the word:</p>
+                </div>
+            </div>
+
+            <div class="target-slots" id="target-slots">
+                </div>
+
+            <p class="subtitle">YOUR LETTERS</p>
+            <div class="letter-bank" id="letter-bank">
+                </div>
+
+            <div class="controls">
+                <button id="submit-btn" class="btn btn-submit">SUBMIT ✓</button>
+                <button id="clear-btn" class="btn btn-clear">CLEAR 🗑️</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
