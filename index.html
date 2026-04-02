@@ -11,23 +11,37 @@
         <header>
             <h1>WORD HUNT</h1>
             <div class="stats">
-                <span id="global-rank">GLOBAL RANK: --</span>
+                <span id="global-rank">GLOBAL RANK: 12</span>
                 <span id="score">SCORE: 0</span>
+            </div>
+            <div class="level-info">
+                <span id="current-phase">Phase 1: Base Word</span>
+                <span id="potential-score" class="points-badge">Max: 20 pts</span>
             </div>
         </header>
 
         <main>
             <div class="visual-display">
-                <div class="lens">
-                    <p class="instruction">Find the word:</p>
+                <div class="image-container">
+                    <div id="word-image" class="clipart-placeholder">🐻</div>
                 </div>
+                <p id="turkish-hint" class="hint-text hidden">TİLKİ</p>
             </div>
 
+            <div class="hint-controls">
+                <button id="btn-turkish" class="btn-small">🇹🇷 Turkish</button>
+                <button id="btn-listen" class="btn-small">🔊 Listen</button>
+            </div>
+
+            <p id="instruction-text" class="subtitle">Drag, tap, or type the letters:</p>
+            
             <div class="target-slots" id="target-slots">
                 </div>
 
-            <p class="subtitle">YOUR LETTERS</p>
             <div class="letter-bank" id="letter-bank">
+                </div>
+
+            <div class="virtual-keyboard hidden" id="virtual-keyboard">
                 </div>
 
             <div class="controls">
