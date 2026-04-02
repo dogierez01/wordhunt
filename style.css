@@ -17,7 +17,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    touch-action: manipulation; /* Prevents double-tap zooming on mobile */
+    touch-action: manipulation;
 }
 
 .app-container {
@@ -29,8 +29,45 @@ body {
     padding: 20px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     text-align: center;
+    position: relative; 
+    overflow: hidden; 
 }
 
+/* Custom Banner Styles */
+.banner {
+    position: absolute;
+    top: 20px;
+    left: 5%;
+    width: 90%;
+    background: rgba(10, 15, 24, 0.95);
+    border: 2px solid var(--neon-yellow);
+    box-shadow: 0 0 20px rgba(249, 215, 28, 0.5);
+    border-radius: 12px;
+    padding: 15px;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+    transform: translateY(0);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+}
+
+.banner.hidden {
+    display: block !important; 
+    transform: translateY(-150%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.banner.error { border-color: #ff3366; box-shadow: 0 0 20px rgba(255, 51, 102, 0.5); }
+.banner.success { border-color: #00ff88; box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); }
+
+#banner-text {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: white;
+    letter-spacing: 1px;
+}
+
+/* Header Styling */
 header h1 {
     color: var(--neon-yellow);
     font-size: 1.5rem;
@@ -66,7 +103,7 @@ header h1 {
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 4rem; /* For the emoji placeholder */
+    font-size: 4rem; 
     box-shadow: var(--border-glow);
     margin-bottom: 10px;
 }
@@ -168,7 +205,7 @@ header h1 {
 }
 
 .tile:active { cursor: grabbing; }
-.tile.hidden { visibility: hidden; }
+.tile.hidden { visibility: hidden !important; }
 .tile.dragging { opacity: 0.5; transform: scale(0.9); }
 
 /* Virtual Keyboard */
