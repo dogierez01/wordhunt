@@ -7,11 +7,7 @@
     --border-glow: 0 0 10px rgba(0, 243, 255, 0.3);
 }
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     background-color: var(--bg-dark);
@@ -21,11 +17,12 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    touch-action: manipulation; /* Prevents double-tap zooming on mobile */
 }
 
 .app-container {
     width: 100%;
-    max-width: 400px;
+    max-width: 450px;
     background: linear-gradient(145deg, #111928, #0a0f18);
     border: 1px solid rgba(0, 243, 255, 0.2);
     border-radius: 20px;
@@ -34,65 +31,91 @@ body {
     text-align: center;
 }
 
-/* Header Styling */
 header h1 {
     color: var(--neon-yellow);
     font-size: 1.5rem;
     letter-spacing: 2px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     text-shadow: 0 0 5px rgba(249, 215, 28, 0.5);
 }
 
-.stats {
+.stats, .level-info {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
     color: var(--neon-blue);
-    border-top: 1px solid rgba(0, 243, 255, 0.2);
-    border-bottom: 1px solid rgba(0, 243, 255, 0.2);
     padding: 10px 0;
-    margin-bottom: 20px;
 }
+.stats { border-top: 1px solid rgba(0,243,255,0.2); border-bottom: 1px solid rgba(0,243,255,0.2); margin-bottom: 10px; }
+.level-info { margin-bottom: 20px; color: #8892b0; }
+.points-badge { color: #00ff88; font-weight: bold; }
 
-/* Central Visual Area */
 .visual-display {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
-.lens {
-    width: 200px;
-    height: 200px;
-    border-radius: 50%;
+.image-container {
+    width: 120px;
+    height: 120px;
+    background: var(--panel-bg);
     border: 2px solid var(--neon-blue);
-    background: radial-gradient(circle, rgba(0,243,255,0.1) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 15px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.2), var(--border-glow);
+    font-size: 4rem; /* For the emoji placeholder */
+    box-shadow: var(--border-glow);
+    margin-bottom: 10px;
 }
 
-.instruction {
-    font-size: 0.9rem;
-    color: var(--neon-blue);
-    letter-spacing: 1px;
+.hint-text {
+    font-size: 1.2rem;
+    color: var(--neon-yellow);
+    font-weight: bold;
+    letter-spacing: 2px;
+    min-height: 25px;
 }
 
-/* Gameplay Elements */
+.hint-controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.btn-small {
+    background: transparent;
+    color: #8892b0;
+    border: 1px solid #8892b0;
+    padding: 5px 10px;
+    border-radius: 15px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+.btn-small:hover { background: rgba(255,255,255,0.1); color: white; }
+
+.subtitle {
+    font-size: 0.85rem;
+    color: #8892b0;
+    margin-bottom: 15px;
+}
+
+/* Slots & Drag/Drop */
 .target-slots {
     display: flex;
     justify-content: center;
     gap: 10px;
     margin-bottom: 30px;
-    min-height: 50px;
+    min-height: 55px;
 }
 
 .slot {
     width: 45px;
     height: 55px;
-    border: 1px solid var(--neon-yellow);
+    border: 2px dashed rgba(249, 215, 28, 0.3);
     border-radius: 5px;
     display: flex;
     justify-content: center;
@@ -100,23 +123,30 @@ header h1 {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--neon-yellow);
-    background-color: rgba(249, 215, 28, 0.05);
-    text-transform: uppercase;
+    transition: all 0.2s;
 }
 
-.subtitle {
-    font-size: 0.8rem;
-    color: #8892b0;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
+.slot.drag-over {
+    background-color: rgba(249, 215, 28, 0.2);
+    border-style: solid;
+    border-color: var(--neon-yellow);
+    transform: scale(1.1);
 }
 
+.slot.filled {
+    border-style: solid;
+    border-color: var(--neon-yellow);
+    background-color: rgba(249, 215, 28, 0.1);
+}
+
+/* Draggable Tiles */
 .letter-bank {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 30px;
+    min-height: 50px;
 }
 
 .tile {
@@ -131,57 +161,47 @@ header h1 {
     font-size: 1.5rem;
     font-weight: bold;
     color: var(--neon-blue);
-    cursor: pointer;
+    cursor: grab;
     text-transform: uppercase;
-    transition: all 0.2s ease;
-    box-shadow: inset 0 0 10px rgba(0, 243, 255, 0.1);
+    transition: transform 0.1s;
+    user-select: none;
 }
 
-.tile:hover {
-    background-color: rgba(0, 243, 255, 0.2);
-    transform: translateY(-2px);
-    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+.tile:active { cursor: grabbing; }
+.tile.hidden { visibility: hidden; }
+.tile.dragging { opacity: 0.5; transform: scale(0.9); }
+
+/* Virtual Keyboard */
+.virtual-keyboard {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 30px;
 }
 
-.tile.hidden {
-    visibility: hidden; /* Keeps the space, but hides the tile when tapped */
-}
-
-/* Controls */
-.controls {
+.keyboard-row {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 5px;
 }
 
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 20px;
+.key {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 5px;
+    padding: 10px 12px;
+    font-size: 1rem;
     font-weight: bold;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
+    user-select: none;
 }
+.key:active { background: var(--neon-blue); color: black; }
+.key-wide { padding: 10px 20px; font-size: 0.9rem; }
 
-.btn-submit {
-    background-color: #00ff88;
-    color: #003311;
-    box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
-}
-
-.btn-submit:hover {
-    background-color: #00cc6a;
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
-}
-
-.btn-clear {
-    background-color: transparent;
-    color: #ff3366;
-    border: 1px solid #ff3366;
-}
-
-.btn-clear:hover {
-    background-color: rgba(255, 51, 102, 0.1);
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.3);
-}
+/* Controls */
+.controls { display: flex; justify-content: center; gap: 15px; }
+.btn { padding: 12px 25px; border: none; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+.btn-submit { background-color: #00ff88; color: #003311; }
+.btn-clear { background-color: transparent; color: #ff3366; border: 1px solid #ff3366; }
+.hidden { display: none !important; }
