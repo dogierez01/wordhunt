@@ -22,6 +22,10 @@ let availableTiles = [];
 let totalScore = 0;
 let currentMaxPoints = 20;
 
+// Hint State Variables
+let turkishUsed = false;
+let listenUsed = false;
+
 // DOM Elements
 const slotsContainer = document.getElementById('target-slots');
 const bankContainer = document.getElementById('letter-bank');
@@ -33,9 +37,17 @@ const turkishHintTxt = document.getElementById('turkish-hint');
 const btnTurkish = document.getElementById('btn-turkish');
 const btnListen = document.getElementById('btn-listen');
 const phaseTitle = document.getElementById('current-phase');
+const submitBtn = document.getElementById('submit-btn');
+const clearBtn = document.getElementById('clear-btn');
 
 // Initialize
 function initGame() {
+    // Explicitly set types to prevent accidental page reloads
+    btnTurkish.type = 'button';
+    btnListen.type = 'button';
+    submitBtn.type = 'button';
+    clearBtn.type = 'button';
+
     buildVirtualKeyboard();
     loadPhase1();
     setupPhysicalKeyboard();
@@ -46,6 +58,14 @@ function loadPhase1() {
     currentTargetWord = currentLevelData.baseWord;
     currentMaxPoints = 20;
     selectedLetters = new Array(currentTargetWord.length).fill(null);
+    
+    // Reset Hints for the new word
+    turkishUsed = false;
+    listenUsed = false;
+    btnTurkish.style.opacity = '1';
+    btnListen.style.opacity = '1';
+    btnTurkish.style.cursor = 'pointer';
+    btnListen.style.cursor = 'pointer';
     
     // UI Updates
     phaseTitle.textContent = "Phase 1: Base Word";
@@ -63,24 +83,46 @@ function loadPhase1() {
     renderTiles(scrambled);
 }
 
-// Penalty System Logic
-btnTurkish.addEventListener('click', () => {
-    if(turkishHintTxt.classList.contains('hidden') && !isBonusRound) {
-        turkishHintTxt.classList.remove('hidden');
+// --- BUG FIXED: Bulletproof Hint System ---
+
+btnTurkish.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (isBonusRound) return; // Disabled during bonus round
+    
+    // Reveal the Turkish text
+    turkishHintTxt.classList.remove('hidden');
+    
+    // Only apply the 3-point penalty once
+    if (!turkishUsed) {
         currentMaxPoints = Math.max(0, currentMaxPoints - 3);
         updatePointsDisplay();
+        turkishUsed = true;
+        btnTurkish.style.opacity = '0.4'; // Visual cue that the hint is consumed
     }
 });
 
-btnListen.addEventListener('click', () => {
-    if(!isBonusRound) {
-        const msg = new SpeechSynthesisUtterance(currentTargetWord);
-        msg.lang = 'en-US';
-        window.speechSynthesis.speak(msg);
+btnListen.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (isBonusRound) return; // Disabled during bonus round
+    
+    // Cancel any stuck audio to force it to play immediately
+    window.speechSynthesis.cancel(); 
+    
+    const msg = new SpeechSynthesisUtterance(currentTargetWord);
+    msg.lang = 'en-US';
+    msg.rate = 0.9; // Slightly slower to help with pronunciation
+    window.speechSynthesis.speak(msg);
+
+    // Only apply the 5-point penalty once, even if they listen again
+    if (!listenUsed) {
         currentMaxPoints = Math.max(0, currentMaxPoints - 5);
         updatePointsDisplay();
+        listenUsed = true;
+        btnListen.style.opacity = '0.4'; // Visual cue that the hint is consumed
     }
 });
+
+// --- REST OF GAME ENGINE ---
 
 function updatePointsDisplay() {
     pointsBadge.textContent = `Max: ${currentMaxPoints} pts`;
@@ -112,7 +154,7 @@ function renderSlots() {
 
         // Drag & Drop Listeners for Slots
         slot.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Necessary to allow dropping
+            e.preventDefault(); 
             if(!selectedLetters[i]) slot.classList.add('drag-over');
         });
         slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
@@ -182,9 +224,9 @@ function handleKeyPress(key) {
     const upperKey = key.toUpperCase();
     
     if (upperKey === 'BACKSPACE' || upperKey === 'DELETE') {
-        document.getElementById('clear-btn').click();
+        clearBtn.click();
     } else if (upperKey === 'ENTER') {
-        document.getElementById('submit-btn').click();
+        submitBtn.click();
     } else if (/^[A-Z]$/.test(upperKey)) {
         if (!isBonusRound) {
             // Phase 1: Check if letter is available in bank
@@ -236,7 +278,7 @@ function buildVirtualKeyboard() {
 }
 
 // Action Buttons
-document.getElementById('clear-btn').addEventListener('click', () => {
+clearBtn.addEventListener('click', () => {
     selectedLetters.fill(null);
     if (!isBonusRound) {
         availableTiles.forEach(t => t.isUsed = false);
@@ -245,7 +287,7 @@ document.getElementById('clear-btn').addEventListener('click', () => {
     renderSlots();
 });
 
-document.getElementById('submit-btn').addEventListener('click', () => {
+submitBtn.addEventListener('click', () => {
     const guess = selectedLetters.map(t => t ? t.letter : '').join('');
     
     if (guess.length !== currentTargetWord.length) return alert("Fill all slots!");
@@ -264,11 +306,11 @@ document.getElementById('submit-btn').addEventListener('click', () => {
             }, 500);
         } else {
             alert("Bonus Target Cleared!");
-            // Add static bonus points, load next target or end
+            // Temporary alert until we code the next level transition
         }
     } else {
         alert("Not quite right. Try again!");
-        document.getElementById('clear-btn').click();
+        clearBtn.click();
     }
 });
 
@@ -276,6 +318,13 @@ function loadBonusPhase(bonusIndex) {
     isBonusRound = true;
     const targetData = currentLevelData.bonusTargets[bonusIndex];
     currentTargetWord = targetData.targetWord;
+    
+    // Hide the hint buttons visually during the bonus round
+    btnTurkish.style.opacity = '0.2';
+    btnListen.style.opacity = '0.2';
+    btnTurkish.style.cursor = 'default';
+    btnListen.style.cursor = 'default';
+    turkishHintTxt.classList.add('hidden');
     
     phaseTitle.textContent = "Phase 2: Bonus Round!";
     wordImage.textContent = targetData.image; 
