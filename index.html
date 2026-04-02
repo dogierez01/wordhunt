@@ -3,56 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Hunt</title>
+    <title>Word Builder Game</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <div id="custom-banner" class="banner hidden">
-            <p id="banner-text">Message goes here</p>
-        </div>
-
+    <div id="lobby-screen" class="container">
         <header>
-            <h1>WORD HUNT</h1>
-            <div class="stats">
-                <span id="global-rank">GLOBAL RANK: 12</span>
-                <span id="score">SCORE: 0</span>
+            <h1>Word Lab: Select a Level</h1>
+            <div class="score-board">Total Score: <span id="lobby-total-score">0</span></div>
+        </header>
+        <div id="lobby-grid">
             </div>
-            <div class="level-info">
-                <span id="current-phase">Phase 1: Base Word</span>
-                <span id="potential-score" class="points-badge">Max: 20 pts</span>
-            </div>
+    </div>
+
+    <div id="game-screen" class="container" style="display: none;">
+        <header>
+            <button id="btn-back" class="control-btn back-btn">⬅ Back to Lobby</button>
+            <div class="score-board">Total Score: <span id="game-total-score">0</span></div>
         </header>
 
-        <main>
-            <div class="visual-display">
-                <div class="image-container">
-                    <div id="word-image" class="clipart-placeholder">🐻</div>
-                </div>
-                <p id="turkish-hint" class="hint-text hidden">TİLKİ</p>
-            </div>
+        <div class="hints-container">
+            <button id="btn-pic" class="hint-btn">🖼️ Picture Hint (Max 18 pts)</button>
+            <button id="btn-tr" class="hint-btn">🇹🇷 Turkish Hint (Max 16 pts)</button>
+            <button id="btn-audio" class="hint-btn">🔊 Audio Hint (Max 14 pts)</button>
+        </div>
 
-            <div class="hint-controls">
-                <button id="btn-turkish" class="btn-small">🇹🇷 Turkish</button>
-                <button id="btn-listen" class="btn-small">🔊 Listen</button>
-            </div>
+        <div id="message-area" class="message-area"></div>
 
-            <p id="instruction-text" class="subtitle">Drag, tap, or type the letters:</p>
-            
-            <div class="target-slots" id="target-slots">
-                </div>
+        <div id="target-slots" class="slots-container"></div>
+        <div id="scrambled-letters" class="letters-container"></div>
 
-            <div class="letter-bank" id="letter-bank">
-                </div>
-
-            <div class="virtual-keyboard hidden" id="virtual-keyboard">
-                </div>
-
-            <div class="controls">
-                <button id="submit-btn" class="btn btn-submit">SUBMIT ✓</button>
-                <button id="clear-btn" class="btn btn-clear">CLEAR 🗑️</button>
-            </div>
-        </main>
+        <div class="controls">
+            <button id="btn-clear" class="control-btn clear">Clear</button>
+            <button id="btn-submit" class="control-btn submit">Submit</button>
+        </div>
     </div>
 
     <script src="script.js"></script>
