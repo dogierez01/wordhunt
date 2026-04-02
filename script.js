@@ -1,338 +1,220 @@
-// The Database (Structured for the future Campaign Lobby)
-const db = [
-    {
-        category: 4,
-        stage: 1,
-        baseWord: "BEAR",
-        turkish: "AYI",
-        image: "🐻", // Replace with your image paths later (e.g., 'images/bear.png')
-        bonusTargets: [
-            { targetWord: "EAR", image: "👂" },
-            { targetWord: "BEARD", image: "🧔" }
-        ]
-    }
-];
+// THE DATABASE: Organized by word length
+const wordsDB = {
+    3: [
+        { word: "FOX", scrambled: ["O", "X", "F"], tr: "Tilki", hintPic: "🦊" },
+        { word: "FAT", scrambled: ["T", "A", "F"], tr: "Şişman", hintPic: "🍔" }
+        // You can add up to 8 more here
+    ],
+    4: [
+        { word: "BIRD", scrambled: ["D", "I", "R", "B"], tr: "Kuş", hintPic: "🐦" }
+        // 9 more spots available
+    ],
+    5: [
+        { word: "SPARE", scrambled: ["R", "E", "P", "A", "S"], tr: "Esirgemek / Yedek", hintPic: "🚗" }
+        // 9 more spots available
+    ],
+    6: [
+        // 10 spots available
+    ],
+    7: [
+        // 10 spots available
+    ]
+};
 
-// Game State Variables
-let currentLevelData = db[0]; 
-let isBonusRound = false;
-let currentTargetWord = currentLevelData.baseWord;
-let selectedLetters = [];
-let availableTiles = [];
 let totalScore = 0;
-let currentMaxPoints = 20;
-let currentBonusIndex = 0; // Tracks which bonus word we are on
-
-// Hint State Variables
-let turkishUsed = false;
-let listenUsed = false;
+let currentMaxScore = 20;
+let activeWord = null;
 
 // DOM Elements
-const slotsContainer = document.getElementById('target-slots');
-const bankContainer = document.getElementById('letter-bank');
-const keyboardContainer = document.getElementById('virtual-keyboard');
-const scoreDisplay = document.getElementById('score');
-const pointsBadge = document.getElementById('potential-score');
-const wordImage = document.getElementById('word-image');
-const turkishHintTxt = document.getElementById('turkish-hint');
-const btnTurkish = document.getElementById('btn-turkish');
-const btnListen = document.getElementById('btn-listen');
-const phaseTitle = document.getElementById('current-phase');
-const submitBtn = document.getElementById('submit-btn');
-const clearBtn = document.getElementById('clear-btn');
+const lobbyScreen = document.getElementById("lobby-screen");
+const gameScreen = document.getElementById("game-screen");
+const lobbyGrid = document.getElementById("lobby-grid");
+const targetSlotsContainer = document.getElementById("target-slots");
+const scrambledLettersContainer = document.getElementById("scrambled-letters");
+const messageArea = document.getElementById("message-area");
+const lobbyTotalScoreEl = document.getElementById("lobby-total-score");
+const gameTotalScoreEl = document.getElementById("game-total-score");
 
-// Initialize
-function initGame() {
-    btnTurkish.type = 'button';
-    btnListen.type = 'button';
-    submitBtn.type = 'button';
-    clearBtn.type = 'button';
-
-    buildVirtualKeyboard();
-    loadPhase1();
-    setupPhysicalKeyboard();
-}
-
-function loadPhase1() {
-    isBonusRound = false;
-    currentTargetWord = currentLevelData.baseWord;
-    currentMaxPoints = 20;
-    currentBonusIndex = 0;
-    selectedLetters = new Array(currentTargetWord.length).fill(null);
+// 1. GENERATE THE LOBBY
+function buildLobby() {
+    lobbyGrid.innerHTML = "";
     
-    // Reset Hints for the new word
-    turkishUsed = false;
-    listenUsed = false;
-    btnTurkish.style.opacity = '1';
-    btnListen.style.opacity = '1';
-    btnTurkish.style.cursor = 'pointer';
-    btnListen.style.cursor = 'pointer';
-    
-    // UI Updates
-    phaseTitle.textContent = "Phase 1: Base Word";
-    wordImage.textContent = currentLevelData.image; 
-    turkishHintTxt.textContent = currentLevelData.turkish;
-    turkishHintTxt.classList.add('hidden');
-    updatePointsDisplay();
-
-    // Show Tiles, Hide Keyboard
-    bankContainer.classList.remove('hidden');
-    keyboardContainer.classList.add('hidden');
-    
-    const scrambled = scrambleWord(currentTargetWord);
-    renderSlots();
-    renderTiles(scrambled);
-}
-
-btnTurkish.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (isBonusRound) return; 
-    
-    turkishHintTxt.classList.remove('hidden');
-    
-    if (!turkishUsed) {
-        currentMaxPoints = Math.max(0, currentMaxPoints - 3);
-        updatePointsDisplay();
-        turkishUsed = true;
-        btnTurkish.style.opacity = '0.4'; 
-    }
-});
-
-btnListen.addEventListener('click', (e) => {
-    e.preventDefault();
-    if (isBonusRound) return; 
-    
-    window.speechSynthesis.cancel(); 
-    
-    const msg = new SpeechSynthesisUtterance(currentTargetWord);
-    msg.lang = 'en-US';
-    msg.rate = 0.9; 
-    window.speechSynthesis.speak(msg);
-
-    if (!listenUsed) {
-        currentMaxPoints = Math.max(0, currentMaxPoints - 5);
-        updatePointsDisplay();
-        listenUsed = true;
-        btnListen.style.opacity = '0.4'; 
-    }
-});
-
-function updatePointsDisplay() {
-    pointsBadge.textContent = `Max: ${currentMaxPoints} pts`;
-}
-
-function scrambleWord(word) {
-    let arr = word.split('');
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return (arr.join('') === word && word.length > 1) ? scrambleWord(word) : arr;
-}
-
-function renderSlots() {
-    slotsContainer.innerHTML = '';
-    for (let i = 0; i < currentTargetWord.length; i++) {
-        const slot = document.createElement('div');
-        slot.classList.add('slot');
-        slot.dataset.index = i;
+    // Loop through lengths 3 to 7
+    for (let length = 3; length <= 7; length++) {
+        const categoryDiv = document.createElement("div");
+        categoryDiv.classList.add("lobby-category");
+        categoryDiv.innerHTML = `<h3>${length} Letter Words</h3>`;
         
-        if (selectedLetters[i]) {
-            slot.textContent = selectedLetters[i].letter;
-            slot.classList.add('filled');
-        } else {
-            slot.textContent = '_';
-        }
+        const spotGrid = document.createElement("div");
+        spotGrid.classList.add("spot-grid");
 
-        slot.addEventListener('dragover', (e) => {
-            e.preventDefault(); 
-            if(!selectedLetters[i]) slot.classList.add('drag-over');
-        });
-        slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
-        slot.addEventListener('drop', (e) => handleDrop(e, i));
+        // Create exactly 10 spots for each category
+        for (let i = 0; i < 10; i++) {
+            const btn = document.createElement("button");
+            btn.classList.add("spot-btn");
+            btn.textContent = i + 1;
 
-        slotsContainer.appendChild(slot);
-    }
-}
-
-function renderTiles(arr) {
-    bankContainer.innerHTML = '';
-    availableTiles = arr.map((letter, index) => ({ id: index, letter: letter, isUsed: false }));
-
-    availableTiles.forEach(tileData => {
-        const tile = document.createElement('div');
-        tile.classList.add('tile');
-        tile.textContent = tileData.letter;
-        tile.draggable = true;
-        
-        tile.addEventListener('click', () => placeLetterInFirstEmptySlot(tileData, tile));
-        
-        tile.addEventListener('dragstart', (e) => {
-            e.dataTransfer.setData('text/plain', tileData.id);
-            setTimeout(() => tile.classList.add('dragging'), 0);
-        });
-        tile.addEventListener('dragend', () => tile.classList.remove('dragging'));
-
-        bankContainer.appendChild(tile);
-    });
-}
-
-function placeLetterInFirstEmptySlot(tileData, tileElement) {
-    if (tileData.isUsed) return;
-    const emptyIndex = selectedLetters.findIndex(val => val === null);
-    if (emptyIndex !== -1) {
-        tileData.isUsed = true;
-        tileElement.classList.add('hidden');
-        selectedLetters[emptyIndex] = tileData;
-        renderSlots();
-    }
-}
-
-function handleDrop(e, slotIndex) {
-    e.preventDefault();
-    document.querySelectorAll('.slot').forEach(s => s.classList.remove('drag-over'));
-    
-    if (selectedLetters[slotIndex] !== null) return;
-
-    const tileId = parseInt(e.dataTransfer.getData('text/plain'));
-    const tileData = availableTiles.find(t => t.id === tileId);
-    const tileElements = document.querySelectorAll('.tile');
-    
-    if (tileData && !tileData.isUsed) {
-        tileData.isUsed = true;
-        tileElements[tileId].classList.add('hidden');
-        selectedLetters[slotIndex] = tileData;
-        renderSlots();
-    }
-}
-
-function handleKeyPress(key) {
-    const upperKey = key.toUpperCase();
-    
-    if (upperKey === 'BACKSPACE' || upperKey === 'DELETE') {
-        clearBtn.click();
-    } else if (upperKey === 'ENTER') {
-        submitBtn.click();
-    } else if (/^[A-Z]$/.test(upperKey)) {
-        if (!isBonusRound) {
-            const availableTileIndex = availableTiles.findIndex(t => t.letter === upperKey && !t.isUsed);
-            if (availableTileIndex !== -1) {
-                const tileElements = document.querySelectorAll('.tile');
-                placeLetterInFirstEmptySlot(availableTiles[availableTileIndex], tileElements[availableTileIndex]);
-            }
-        } else {
-             const emptyIndex = selectedLetters.findIndex(val => val === null);
-             if (emptyIndex !== -1) {
-                 selectedLetters[emptyIndex] = { letter: upperKey }; 
-                 renderSlots();
-             }
-        }
-    }
-}
-
-function setupPhysicalKeyboard() {
-    document.addEventListener('keydown', (e) => handleKeyPress(e.key));
-}
-
-function buildVirtualKeyboard() {
-    const layout = [ "QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM", "⌫" ];
-    keyboardContainer.innerHTML = '';
-    
-    layout.forEach(row => {
-        const rowDiv = document.createElement('div');
-        rowDiv.classList.add('keyboard-row');
-        
-        if (row === "⌫") {
-             const keyBtn = document.createElement('div');
-             keyBtn.classList.add('key', 'key-wide');
-             keyBtn.textContent = "Backspace";
-             keyBtn.addEventListener('click', () => handleKeyPress("Backspace"));
-             rowDiv.appendChild(keyBtn);
-        } else {
-            row.split('').forEach(char => {
-                const keyBtn = document.createElement('div');
-                keyBtn.classList.add('key');
-                keyBtn.textContent = char;
-                keyBtn.addEventListener('click', () => handleKeyPress(char));
-                rowDiv.appendChild(keyBtn);
-            });
-        }
-        keyboardContainer.appendChild(rowDiv);
-    });
-}
-
-clearBtn.addEventListener('click', () => {
-    selectedLetters.fill(null);
-    if (!isBonusRound) {
-        availableTiles.forEach(t => t.isUsed = false);
-        document.querySelectorAll('.tile').forEach(t => t.classList.remove('hidden'));
-    }
-    renderSlots();
-});
-
-submitBtn.addEventListener('click', () => {
-    const guess = selectedLetters.map(t => t ? t.letter : '').join('');
-    
-    if (guess.length !== currentTargetWord.length) return alert("Fill all slots!");
-
-    if (guess === currentTargetWord) {
-        if (!isBonusRound) {
-            let multiplier = 1.0 + ((currentTargetWord.length - 3) * 0.1);
-            totalScore += Math.floor(currentMaxPoints * multiplier);
-            scoreDisplay.textContent = `SCORE: ${totalScore}`;
-            
-            setTimeout(() => {
-                alert("Base Word Cleared! Entering Bonus Round!");
-                loadBonusPhase(currentBonusIndex);
-            }, 500);
-        } else {
-            // SUCCESSFUL BONUS GUESS LOGIC
-            alert("Bonus Target Cleared! +10 Points");
-            totalScore += 10;
-            scoreDisplay.textContent = `SCORE: ${totalScore}`;
-            
-            currentBonusIndex++; // Move to the next bonus target
-            
-            if (currentBonusIndex < currentLevelData.bonusTargets.length) {
-                setTimeout(() => {
-                    loadBonusPhase(currentBonusIndex);
-                }, 500);
+            // Check if we actually have data for this spot
+            if (wordsDB[length] && wordsDB[length][i]) {
+                btn.addEventListener("click", () => startGame(wordsDB[length][i]));
             } else {
-                setTimeout(() => {
-                    alert(`Level Complete! Total Score: ${totalScore}`);
-                    // Resets the game back to Phase 1 for now until we build the Lobby
-                    initGame(); 
-                }, 500);
+                btn.classList.add("empty");
+                btn.addEventListener("click", () => alert("Word coming soon! You haven't added data for this spot yet."));
             }
+            
+            spotGrid.appendChild(btn);
         }
-    } else {
-        alert("Not quite right. Try again!");
-        clearBtn.click();
+        
+        categoryDiv.appendChild(spotGrid);
+        lobbyGrid.appendChild(categoryDiv);
     }
-});
-
-function loadBonusPhase(bonusIndex) {
-    isBonusRound = true;
-    const targetData = currentLevelData.bonusTargets[bonusIndex];
-    currentTargetWord = targetData.targetWord;
-    
-    btnTurkish.style.opacity = '0.2';
-    btnListen.style.opacity = '0.2';
-    btnTurkish.style.cursor = 'default';
-    btnListen.style.cursor = 'default';
-    turkishHintTxt.classList.add('hidden');
-    
-    phaseTitle.textContent = `Phase 2: Bonus Round! (${bonusIndex + 1}/${currentLevelData.bonusTargets.length})`;
-    wordImage.textContent = targetData.image; 
-    pointsBadge.textContent = "Bonus: 10 pts";
-    
-    selectedLetters = new Array(currentTargetWord.length).fill(null);
-    
-    bankContainer.classList.add('hidden');
-    keyboardContainer.classList.remove('hidden');
-    
-    renderSlots();
 }
 
-// Start
-initGame();
+// 2. START THE GAME
+function startGame(wordData) {
+    activeWord = wordData;
+    currentMaxScore = 20;
+    messageArea.textContent = "";
+    
+    lobbyScreen.style.display = "none";
+    gameScreen.style.display = "block";
+
+    // Build empty slots
+    targetSlotsContainer.innerHTML = "";
+    for (let i = 0; i < activeWord.word.length; i++) {
+        const slot = document.createElement("div");
+        slot.classList.add("slot");
+        slot.addEventListener("click", () => returnLetterFromSlot(slot));
+        targetSlotsContainer.appendChild(slot);
+    }
+
+    // Build scrambled tiles
+    scrambledLettersContainer.innerHTML = "";
+    activeWord.scrambled.forEach((letter, index) => {
+        const tile = document.createElement("button");
+        tile.classList.add("letter-tile");
+        tile.textContent = letter;
+        tile.dataset.id = index;
+        tile.addEventListener("click", () => moveLetterToSlot(tile));
+        scrambledLettersContainer.appendChild(tile);
+    });
+}
+
+// 3. BACK TO LOBBY
+document.getElementById("btn-back").addEventListener("click", () => {
+    gameScreen.style.display = "none";
+    lobbyScreen.style.display = "block";
+});
+
+// 4. GAMEPLAY MECHANICS (Same as before)
+function moveLetterToSlot(tile) {
+    const slots = Array.from(targetSlotsContainer.children);
+    const emptySlot = slots.find(slot => slot.textContent === "");
+
+    if (emptySlot) {
+        emptySlot.textContent = tile.textContent;
+        emptySlot.dataset.tileId = tile.dataset.id;
+        tile.disabled = true;
+    }
+}
+
+function returnLetterFromSlot(slot) {
+    if (slot.textContent !== "") {
+        const tileId = slot.dataset.tileId;
+        const originalTile = scrambledLettersContainer.querySelector(`[data-id='${tileId}']`);
+        originalTile.disabled = false;
+        slot.textContent = "";
+        delete slot.dataset.tileId;
+    }
+}
+
+// Keyboard Support
+document.addEventListener("keydown", (e) => {
+    if (gameScreen.style.display === "none") return; // Only work when game is active
+
+    const key = e.key.toUpperCase();
+    const availableTiles = Array.from(scrambledLettersContainer.children).filter(t => !t.disabled);
+    
+    if (/[A-Z]/.test(key) && key.length === 1) {
+        const tileToMove = availableTiles.find(t => t.textContent === key);
+        if (tileToMove) moveLetterToSlot(tileToMove);
+    }
+    
+    if (e.key === "Backspace") {
+        const slots = Array.from(targetSlotsContainer.children);
+        for (let i = slots.length - 1; i >= 0; i--) {
+            if (slots[i].textContent !== "") {
+                returnLetterFromSlot(slots[i]);
+                break;
+            }
+        }
+    }
+    
+    if (e.key === "Enter") checkWord();
+});
+
+document.getElementById("btn-clear").addEventListener("click", () => {
+    const slots = Array.from(targetSlotsContainer.children);
+    slots.forEach(slot => returnLetterFromSlot(slot));
+});
+
+function updateScoreDisplays() {
+    lobbyTotalScoreEl.textContent = totalScore;
+    gameTotalScoreEl.textContent = totalScore;
+}
+
+function checkWord() {
+    const slots = Array.from(targetSlotsContainer.children);
+    const assembledWord = slots.map(slot => slot.textContent).join("");
+
+    if (assembledWord.length < activeWord.word.length) {
+        messageArea.style.color = "#e67e22";
+        messageArea.textContent = "Fill all boxes first!";
+        return;
+    }
+
+    if (assembledWord === activeWord.word) {
+        totalScore += currentMaxScore;
+        updateScoreDisplays();
+        messageArea.style.color = "#2ecc71";
+        messageArea.textContent = `Correct! +${currentMaxScore} Points. Returning to Lobby...`;
+        
+        setTimeout(() => {
+            document.getElementById("btn-back").click(); // Trigger back to lobby
+        }, 2000);
+    } else {
+        messageArea.style.color = "#e74c3c";
+        messageArea.textContent = "Incorrect, try again.";
+        setTimeout(() => { messageArea.textContent = ""; }, 1500);
+    }
+}
+
+document.getElementById("btn-submit").addEventListener("click", checkWord);
+
+// 5. HINTS
+document.getElementById("btn-pic").addEventListener("click", () => {
+    messageArea.style.color = "#3498db";
+    messageArea.textContent = activeWord.hintPic;
+    if (currentMaxScore > 18) currentMaxScore = 18;
+});
+
+document.getElementById("btn-tr").addEventListener("click", () => {
+    messageArea.style.color = "#3498db";
+    messageArea.textContent = `TR: ${activeWord.tr}`;
+    if (currentMaxScore > 16) currentMaxScore = 16;
+});
+
+document.getElementById("btn-audio").addEventListener("click", () => {
+    messageArea.style.color = "#3498db";
+    messageArea.textContent = "🔊 Playing Audio...";
+    
+    const utterance = new SpeechSynthesisUtterance(activeWord.word);
+    utterance.lang = 'en-US';
+    window.speechSynthesis.speak(utterance);
+
+    if (currentMaxScore > 14) currentMaxScore = 14;
+});
+
+// Initialize on page load
+buildLobby();
+updateScoreDisplays();
